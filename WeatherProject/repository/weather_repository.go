@@ -27,10 +27,6 @@ func InsertDb(weather models.WeatherResponse) error {
 	return err
 }
 
-func setCache(weather models.WeatherResponse) {
-
-}
-
 func FindByDate(date string) (*models.WeatherResponse, error) {
 
 	var w models.WeatherResponse
