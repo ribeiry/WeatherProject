@@ -8,6 +8,7 @@
 *.so
 *.dylib
 
+# Contants
 config/constants.go
 
 # Test binary, built with `go test -c`
