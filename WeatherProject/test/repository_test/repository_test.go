@@ -76,3 +76,38 @@ func TestInsertWeather(t *testing.T) {
 
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestFindAll(t *testing.T) {
+	dbMock, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	var expectedList []models.WeatherResponse
+
+	defer dbMock.Close()
+
+	repo := &db.MySqlWeatherRepository{DB: dbMock}
+	config.Caching = cache.New(5*time.Minute, 10*time.Minute)
+
+	expected := models.WeatherResponse{
+		Country: "BR",
+		Date:    "2024-04-10",
+	}
+
+	expectedList = append(expectedList, expected)
+
+	rows := sqlmock.NewRows([]string{"country", "date"}).
+		AddRow(expected.Country, expected.Date)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT country, date FROM weather")).
+		WillReturnRows(rows)
+
+	result, err := repo.FindAll()
+
+	if err != nil {
+		t.Fatalf("Erro inesperado: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("Houve falha nas expectativas do mock: %v", err)
+	}
+	assert.NoError(t, err)
+	assert.Equal(t, expectedList, result)
+}

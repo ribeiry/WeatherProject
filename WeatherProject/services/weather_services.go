@@ -37,40 +37,49 @@ func (repository *WeatherService) GetTodayWeather() (*models.WeatherResponse, er
 	today := time.Now().Format("2006-01-02")
 	weather, err := repository.Repo.FindByDate(today)
 
-	if err != nil || weather == nil || weather.Country == "" || weather.Text == "" {
+	if err != nil || weather != nil {
 		log.Println("Error ao buscar ao banco")
+		return weather, nil
+	}
+	log.Println("Not found in database, call api ...")
 
-		weather, err = repository.GetTemperature()
+	return repository.fetchAndCacheWeather()
+}
 
+func (repository *WeatherService) fetchAndCacheWeather() (*models.WeatherResponse, error) {
+
+	weather, err := repository.GetTemperature()
+
+	if err != nil {
+		log.Println("Error ao buscar na API")
+		return nil, err
+	}
+
+	go repository.saveWeatherAsync(weather.Country, weather.Text)
+
+	return weather, nil
+}
+
+func (repository *WeatherService) saveWeatherAsync(country, text string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	saveErrChan := make(chan error, 1)
+
+	go func() {
+		saveErrChan <- repository.CreateWeatherEntry(country, text)
+
+	}()
+
+	select {
+	case err := <-saveErrChan:
 		if err != nil {
-			log.Println("Error ao buscar na API")
+			log.Println("Error ao salvar no banco: ", err)
+		} else {
+			log.Println("Salvamento feito com sucesso")
 		}
-
-		go func() {
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-			defer cancel()
-			saveErrChan := make(chan error)
-
-			go func() {
-				saveErrChan <- repository.CreateWeatherEntry(weather.Country, weather.Text)
-
-			}()
-
-			select {
-			case err := <-saveErrChan:
-				if err != nil {
-					log.Println("Error ao salvar no banco: ", err)
-				} else {
-					log.Println("Salvamento feito com sucesso")
-				}
-			case <-ctx.Done():
-				log.Println(" timeout para esperar o Banco de dados")
-			}
-		}()
-
-		return weather, nil
-	} else {
-		return weather, nil
+	case <-ctx.Done():
+		log.Println(" timeout para esperar o Banco de dados")
 	}
 }
 
