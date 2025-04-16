@@ -5,14 +5,17 @@ import (
 	"WeatherProject/models"
 	"database/sql"
 	"log"
-	"time"
 
 	"github.com/patrickmn/go-cache"
 )
 
-func InsertDb(weather models.WeatherResponse) error {
+type MySqlWeatherRepository struct {
+	DB *sql.DB
+}
 
-	stmtIns, err := config.DB.Prepare("INSERT INTO weather (country, date, message) VALUES(?,?,?)")
+func (r *MySqlWeatherRepository) Insert(weather models.WeatherResponse) error {
+
+	stmtIns, err := r.DB.Prepare("INSERT INTO weather (country, date, message) VALUES(?,?,?)")
 
 	if err != nil {
 		return err
@@ -27,7 +30,7 @@ func InsertDb(weather models.WeatherResponse) error {
 	return err
 }
 
-func FindByDate(date string) (*models.WeatherResponse, error) {
+func (r *MySqlWeatherRepository) FindByDate(date string) (*models.WeatherResponse, error) {
 
 	var w models.WeatherResponse
 
@@ -38,12 +41,11 @@ func FindByDate(date string) (*models.WeatherResponse, error) {
 
 	}
 
-	rows, err := config.DB.Prepare("SELECT country, date,message FROM weather WHERE date = ? LIMIT 1")
-	if err != nil {
-		panic(err.Error())
-	}
+	query := "SELECT country, date,message FROM weather WHERE date = ? LIMIT 1"
 
-	rows.QueryRow(time.Now().Format("2006-01-02")).Scan(&w.Country, &w.Date, &w.Text)
+	rows := r.DB.QueryRow(query, date)
+
+	err := rows.Scan(&w.Country, &w.Date, &w.Text)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -60,9 +62,9 @@ func FindByDate(date string) (*models.WeatherResponse, error) {
 	}
 }
 
-func FindAllDb() ([]models.WeatherResponse, error) {
+func (r *MySqlWeatherRepository) FindAll() ([]models.WeatherResponse, error) {
 
-	rows, err := config.DB.Query("SELECT country, date FROM weather")
+	rows, err := r.DB.Query("SELECT country, date FROM weather")
 
 	if err != nil {
 		panic(err.Error())

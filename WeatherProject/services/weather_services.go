@@ -13,23 +13,34 @@ import (
 	"time"
 )
 
-func CreateWeatherEntry(locale, msg string) error {
+func WeatherServiceConstructor(repo db.WeatherRepository, baseUrl string, apiKey string) *WeatherService {
+	return &WeatherService{Repo: repo, BaseURL: baseUrl, APIKey: apiKey}
+}
+
+type WeatherService struct {
+	Repo    db.WeatherRepository
+	BaseURL string
+	APIKey  string
+}
+
+func (repository *WeatherService) CreateWeatherEntry(locale, msg string) error {
 	w := models.WeatherResponse{
 		Country: locale,
 		Date:    time.Now().Format("2006-01-02"),
 		Text:    msg,
 	}
-	return db.InsertDb(w)
+
+	return repository.Repo.Insert(w)
 }
 
-func GetTodayWeather() (*models.WeatherResponse, error) {
+func (repository *WeatherService) GetTodayWeather() (*models.WeatherResponse, error) {
 	today := time.Now().Format("2006-01-02")
-	weather, err := db.FindByDate(today)
+	weather, err := repository.Repo.FindByDate(today)
 
 	if err != nil || weather == nil || weather.Country == "" || weather.Text == "" {
 		log.Println("Error ao buscar ao banco")
 
-		weather, err = GetTemperature()
+		weather, err = repository.GetTemperature()
 
 		if err != nil {
 			log.Println("Error ao buscar na API")
@@ -41,7 +52,7 @@ func GetTodayWeather() (*models.WeatherResponse, error) {
 			saveErrChan := make(chan error)
 
 			go func() {
-				saveErrChan <- CreateWeatherEntry(weather.Country, weather.Text)
+				saveErrChan <- repository.CreateWeatherEntry(weather.Country, weather.Text)
 
 			}()
 
@@ -63,13 +74,13 @@ func GetTodayWeather() (*models.WeatherResponse, error) {
 	}
 }
 
-func GetAllWeather() ([]models.WeatherResponse, error) {
-	return db.FindAllDb()
+func (repo *WeatherService) GetAllWeather() ([]models.WeatherResponse, error) {
+	return repo.Repo.FindAll()
 }
 
-func GetTemperature() (*models.WeatherResponse, error) {
+func (repo *WeatherService) GetTemperature() (*models.WeatherResponse, error) {
 
-	url := fmt.Sprintf("%s%s?token=%s", config.BaseURL, config.SynopticPath, config.APIKey)
+	url := fmt.Sprintf("%s%s?token=%s", repo.BaseURL, config.SynopticPath, repo.APIKey)
 	resp, err := http.Get(url)
 
 	if err != nil {
