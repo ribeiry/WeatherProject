@@ -17,24 +17,30 @@ func Run() {
 	//Inicia a configuracao do Cache
 	config.InitCache()
 
+	repo := &repository.MySqlWeatherRepository{DB: config.DB}
+	service := &service.WeatherService{
+		Repo:    repo,
+		BaseURL: config.BaseURL,
+		APIKey:  config.APIKey,
+	}
+
 	//Cria a camada do GIN e suas rotas
 	router := gin.Default()
-	router.GET("/temperatura", IndentedJSON)
+	router.GET("/temperatura", IndentedJSON(service))
 
 	router.Run("localhost:8080")
 	defer config.DB.Close()
 
 }
 
-func IndentedJSON(c *gin.Context) {
+func IndentedJSON(service service.WeatherServiceInterface) gin.HandlerFunc {
 
-	repo := &repository.MySqlWeatherRepository{DB: config.DB}
-	service := &service.WeatherService{Repo: repo, BaseURL: config.BaseURL, APIKey: config.APIKey}
-
-	response, err := service.GetTodayWeather()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao consultar temperatura"})
-		return
+	return func(c *gin.Context) {
+		response, err := service.GetTodayWeather()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao consultar temperatura"})
+			return
+		}
+		c.IndentedJSON(http.StatusOK, response)
 	}
-	c.IndentedJSON(http.StatusOK, response)
 }

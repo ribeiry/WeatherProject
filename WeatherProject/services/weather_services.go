@@ -38,7 +38,7 @@ func (repository *WeatherService) GetTodayWeather() (*models.WeatherResponse, er
 	weather, err := repository.Repo.FindByDate(today)
 
 	if err != nil || weather != nil {
-		log.Println("Error ao buscar ao banco")
+		log.Println("Encontrado no banco de dados")
 		return weather, nil
 	}
 	log.Println("Not found in database, call api ...")
