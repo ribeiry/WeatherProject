@@ -1,0 +1,10 @@
+package service
+
+import "WeatherProject/src/models"
+
+type WeatherServiceInterface interface {
+	CreateWeatherEntry(locale, msg string) error
+	GetTodayWeather() (*models.WeatherResponse, error)
+	GetAllWeather() ([]models.WeatherResponse, error)
+	GetTemperature() (*models.WeatherResponse, error)
+}
