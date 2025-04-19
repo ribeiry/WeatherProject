@@ -90,8 +90,13 @@ func (repo *WeatherService) GetAllWeather() ([]models.WeatherResponse, error) {
 
 func (repo *WeatherService) GetTemperature() (*models.WeatherResponse, error) {
 
+	client := repo.Client
 	url := fmt.Sprintf("%s%s?token=%s", repo.BaseURL, config.SynopticPath, repo.APIKey)
-	resp, err := repo.Client.Get(url)
+
+	if client == nil {
+		client = http.DefaultClient
+	}
+	resp, err := client.Get(url)
 
 	if err != nil {
 		log.Println(err)
