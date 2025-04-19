@@ -12,6 +12,9 @@ import (
 
 func Run() {
 
+	//Carrega as variaveis de ambiente
+
+	config.LoadEnv()
 	//Inicia a configuracao do Banco
 	error := config.InitDatabase(config.DBConnection)
 

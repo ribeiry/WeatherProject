@@ -1,9 +1,31 @@
 package config
 
-const (
-	BaseURL      = "http://apiadvisor.climatempo.com.br/api/v1"
-	SynopticPath = "/anl/synoptic/locale/BR"
-	APIKey       = "28445f37aa8639da5adaf55dc0a2ed23"
-	Endpoint     = "/temperatura"
-	DBConnection = "root:123@tcp(127.0.0.1:3306)/weather"
+import (
+	"log"
+	"os"
+
+	"github.com/subosito/gotenv"
 )
+
+var (
+	BaseURL      string
+	SynopticPath string
+	APIKey       string
+	Endpoint     string
+	DBConnection string
+)
+
+func LoadEnv() {
+
+	err := gotenv.Load("resources/resources.env")
+
+	if err != nil {
+		log.Println("erro ao carregar o .env")
+	}
+
+	BaseURL = os.Getenv("BASE_URL")
+	SynopticPath = os.Getenv("SYNOPTIC")
+	APIKey = os.Getenv("APIKEY")
+	Endpoint = os.Getenv("ENDPOINT")
+	DBConnection = os.Getenv("DB_CONNECTION")
+}
