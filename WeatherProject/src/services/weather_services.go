@@ -1,9 +1,9 @@
 package service
 
 import (
-	"WeatherProject/src/config"
-	"WeatherProject/src/models"
-	db "WeatherProject/src/repository"
+	"WeatherProject/config"
+	"WeatherProject/models"
+	db "WeatherProject/repository"
 	"context"
 	"encoding/json"
 	"fmt"

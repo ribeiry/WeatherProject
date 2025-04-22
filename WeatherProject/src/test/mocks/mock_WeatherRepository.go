@@ -3,7 +3,7 @@
 package mocksOA
 
 import (
-	models "WeatherProject/src/models"
+	models "WeatherProject/models"
 
 	mock "github.com/stretchr/testify/mock"
 )

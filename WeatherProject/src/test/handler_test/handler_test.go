@@ -1,11 +1,11 @@
 package handler_test
 
 import (
-	"WeatherProject/src/config"
-	handler "WeatherProject/src/handler"
-	"WeatherProject/src/models"
-	service "WeatherProject/src/services"
-	mocksOA "WeatherProject/src/test/mocks"
+	"WeatherProject/config"
+	handler "WeatherProject/handler"
+	"WeatherProject/models"
+	service "WeatherProject/services"
+	mocksOA "WeatherProject/test/mocks"
 	"net/http"
 	"net/http/httptest"
 	"testing"

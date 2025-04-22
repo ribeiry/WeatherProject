@@ -1,6 +1,6 @@
 package db
 
-import "WeatherProject/src/models"
+import "WeatherProject/models"
 
 type WeatherRepository interface {
 	Insert(w models.WeatherResponse) error

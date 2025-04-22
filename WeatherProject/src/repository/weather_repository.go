@@ -1,8 +1,8 @@
 package db
 
 import (
-	"WeatherProject/src/config"
-	"WeatherProject/src/models"
+	"WeatherProject/config"
+	"WeatherProject/models"
 	"database/sql"
 	"log"
 

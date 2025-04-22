@@ -1,16 +1,16 @@
 package services_test
 
 import (
-	"WeatherProject/src/config"
-	"WeatherProject/src/models"
-	service "WeatherProject/src/services"
+	"WeatherProject/config"
+	"WeatherProject/models"
+	service "WeatherProject/services"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	mocksOA "WeatherProject/src/test/mocks"
+	mocksOA "WeatherProject/test/mocks"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -18,9 +18,13 @@ var (
 func LoadEnv() {
 
 	err := gotenv.Load("resources/resources.env")
+	dir, _ := os.Getwd()
+
+	log.Println("Diretorio raiz do projeto é: ", dir)
 
 	if err != nil {
 		log.Println("erro ao carregar o .env")
+		log.Println(err)
 	}
 
 	BaseURL = os.Getenv("BASE_URL")

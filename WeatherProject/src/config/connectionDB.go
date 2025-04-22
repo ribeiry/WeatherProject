@@ -2,6 +2,7 @@ package config
 
 import (
 	"database/sql"
+	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -17,6 +18,7 @@ func InitDatabase(conection string) error {
 	}
 	err = MySqlDB.Ping()
 	if err != nil {
+		log.Println("Erro connectionDB")
 		return err
 	}
 	return nil

@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"WeatherProject/src/config"
-	repository "WeatherProject/src/repository"
-	service "WeatherProject/src/services"
+	"WeatherProject/config"
+	repository "WeatherProject/repository"
+	service "WeatherProject/services"
 	"log"
 	"net/http"
 
@@ -12,9 +12,10 @@ import (
 
 func Run() {
 
+	log.Println("Request Recived RUN HANDLER")
 	//Carrega as variaveis de ambiente
-
 	config.LoadEnv()
+
 	//Inicia a configuracao do Banco
 	error := config.InitDatabase(config.DBConnection)
 
@@ -29,7 +30,7 @@ func Run() {
 	router := ConfigRoutes(service)
 
 	// Roda o servidor
-	router.Run("localhost:8080")
+	router.Run(":8080")
 	defer config.MySqlDB.Close()
 
 }
@@ -38,8 +39,17 @@ func ConfigRoutes(service *service.WeatherService) *gin.Engine {
 	//Cria a camada do GIN e suas rotas
 	router := gin.Default()
 	router.GET("/temperatura", IndentedJSON(service))
+	router.GET("/health", IndentedJSONhealthCheck())
 
 	return router
+}
+
+func IndentedJSONhealthCheck() gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		response := "OK"
+		c.IndentedJSON(http.StatusOK, response)
+	}
 }
 
 func IndentedJSON(service service.WeatherServiceInterface) gin.HandlerFunc {

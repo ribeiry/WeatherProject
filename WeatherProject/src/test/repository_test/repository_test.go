@@ -1,9 +1,9 @@
 package repository_test
 
 import (
-	"WeatherProject/src/config"
-	"WeatherProject/src/models"
-	db "WeatherProject/src/repository"
+	"WeatherProject/config"
+	"WeatherProject/models"
+	db "WeatherProject/repository"
 	"regexp"
 	"testing"
 	"time"

@@ -1,6 +1,6 @@
 package main
 
-import "WeatherProject/src/handler"
+import "WeatherProject/handler"
 
 func main() {
 

@@ -1,7 +1,7 @@
 package config_test
 
 import (
-	"WeatherProject/src/config"
+	"WeatherProject/config"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"

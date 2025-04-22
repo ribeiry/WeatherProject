@@ -1,6 +1,6 @@
 package service
 
-import "WeatherProject/src/models"
+import "WeatherProject/models"
 
 type WeatherServiceInterface interface {
 	CreateWeatherEntry(locale, msg string) error
