@@ -5,3 +5,8 @@ type WeatherResponse struct {
 	Date    string `json:"date"`
 	Text    string `json:"text"`
 }
+
+type WeatherFindResult struct {
+	DataResponse *WeatherResponse
+	Err          error
+}

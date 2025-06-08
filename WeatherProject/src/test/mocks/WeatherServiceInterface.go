@@ -30,6 +30,11 @@ func (_m *WeatherServiceInterface) CreateWeatherEntry(locale string, msg string)
 
 	return r0
 }
+func (m *WeatherServiceInterface) GetTemperatureDay(date string) (*models.WeatherResponse, error) {
+	args := m.Called(date)
+	return args.Get(0).(*models.WeatherResponse), args.Error(1)
+}
+
 
 // GetAllWeather provides a mock function with no fields
 func (_m *WeatherServiceInterface) GetAllWeather() ([]models.WeatherResponse, error) {

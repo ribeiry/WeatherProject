@@ -6,6 +6,7 @@ import (
 	service "WeatherProject/services"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,8 +41,23 @@ func ConfigRoutes(service *service.WeatherService) *gin.Engine {
 	router := gin.Default()
 	router.GET("/temperatura", IndentedJSON(service))
 	router.GET("/health", IndentedJSONhealthCheck())
+	router.GET("/temperaturadata", IndentedJSONDate(service))
 
 	return router
+}
+
+func IndentedJSONDate(service service.WeatherServiceInterface) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		date := c.DefaultQuery("date", time.Now().Format("2006-01-02"))
+		response, err := service.GetTemperatureDay(date)
+		if err != nil || response == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao consultar temperatura"})
+			return
+		}
+		c.IndentedJSON(http.StatusOK, response)
+
+	}
 }
 
 func IndentedJSONhealthCheck() gin.HandlerFunc {
@@ -68,8 +84,9 @@ func SetUpService() *service.WeatherService {
 
 	repo := &repository.MySqlWeatherRepository{DB: config.MySqlDB}
 	return &service.WeatherService{
-		Repo:    repo,
-		BaseURL: config.BaseURL,
-		APIKey:  config.APIKey,
+		Repo:      repo,
+		BaseURL:   config.BaseURL,
+		APIKey:    config.APIKey,
+		Semaphore: make(chan struct{}, 3),
 	}
 }

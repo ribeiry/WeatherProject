@@ -10,18 +10,26 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
-func WeatherServiceConstructor(repo db.WeatherRepository, baseUrl string, apiKey string) *WeatherService {
-	return &WeatherService{Repo: repo, BaseURL: baseUrl, APIKey: apiKey}
+func WeatherServiceConstructor(repo db.WeatherRepository,
+	baseUrl string, apiKey string,
+	semaphore chan struct{}) *WeatherService {
+
+	return &WeatherService{Repo: repo, BaseURL: baseUrl, APIKey: apiKey, Semaphore: semaphore}
 }
 
 type WeatherService struct {
-	Repo    db.WeatherRepository
-	BaseURL string
-	APIKey  string
-	Client  *http.Client
+	Repo        db.WeatherRepository
+	BaseURL     string
+	APIKey      string
+	Client      *http.Client
+	Semaphore   chan struct{}
+	SucessCount int
+	FailCount   int
+	Mutex       sync.Mutex
 }
 
 func (repository *WeatherService) CreateWeatherEntry(locale, msg string) error {
@@ -32,6 +40,67 @@ func (repository *WeatherService) CreateWeatherEntry(locale, msg string) error {
 	}
 
 	return repository.Repo.Insert(w)
+}
+
+func (repository *WeatherService) GetTemperatureDay(date string) (*models.WeatherResponse, error) {
+
+	resp := repository.findByDateAsync(date)
+
+	repository.Mutex.Lock()
+	defer repository.Mutex.Unlock()
+
+	if resp.Err != nil {
+		repository.FailCount++
+		return nil, resp.Err
+	}
+
+	repository.SucessCount++
+
+	return &models.WeatherResponse{
+		Country: resp.DataResponse.Country,
+		Date:    resp.DataResponse.Date,
+		Text:    resp.DataResponse.Text,
+	}, nil
+}
+
+func (repository *WeatherService) findByDateAsync(date string) models.WeatherFindResult {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+
+	defer cancel()
+
+	repository.Semaphore <- struct{}{}
+	defer func() {
+		<-repository.Semaphore
+	}()
+
+	findRespWeather := make(chan models.WeatherFindResult, 1)
+
+	go func() {
+		data, err := repository.Repo.FindByDate(date)
+		findRespWeather <- models.WeatherFindResult{DataResponse: data, Err: err}
+	}()
+
+	select {
+	case resp := <-findRespWeather:
+		if resp.Err != nil {
+			repository.FailCount++
+			log.Println("Error ao buscar no banco: ", resp.Err)
+			return models.WeatherFindResult{
+				Err: fmt.Errorf("Erro ao buscar ao banco de dados"),
+			}
+		} else {
+			repository.SucessCount++
+			log.Println("Busca efetuada com sucesso")
+			return resp
+		}
+	case <-ctx.Done():
+		repository.FailCount++
+		log.Println(" timeout para esperar o Banco de dados")
+		return models.WeatherFindResult{
+			Err: fmt.Errorf("Erro ao buscar ao banco de dados"),
+		}
+	}
+
 }
 
 func (repository *WeatherService) GetTodayWeather() (*models.WeatherResponse, error) {
@@ -65,6 +134,11 @@ func (repository *WeatherService) saveWeatherAsync(country, text string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
+	repository.Semaphore <- struct{}{}
+	defer func() {
+		<-repository.Semaphore
+	}()
+
 	saveErrChan := make(chan error, 1)
 
 	go func() {
@@ -75,11 +149,17 @@ func (repository *WeatherService) saveWeatherAsync(country, text string) {
 	select {
 	case err := <-saveErrChan:
 		if err != nil {
+			repository.FailCount++
 			log.Println("Error ao salvar no banco: ", err)
 		} else {
+			repository.SucessCount++
 			log.Println("Salvamento feito com sucesso")
 		}
 	case <-ctx.Done():
+		repository.Mutex.Lock()
+		defer repository.Mutex.Unlock()
+
+		repository.FailCount++
 		log.Println(" timeout para esperar o Banco de dados")
 	}
 }
